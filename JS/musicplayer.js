@@ -1,4 +1,5 @@
 let cs = Number(localStorage.getItem("cs")) || 0;
+if (cs < 0 || cs >= songs.length) cs = 0;
 let currentSong = songs[cs];
 let lastIndex = -1;
 
@@ -27,13 +28,22 @@ function lss(){
     cover.src = album.cover;
     au.src = song.music;
 
+    // sinkron ke mini player di home
+    htitle.textContent = song.title;
+    hartist.textContent = song.artist + " — " + song.album;
+    hcover.src = album.cover;
+
+    // bersihkan lirik lagu sebelumnya
+    lyrics.innerHTML = "";
+    lastIndex = -1;
+
     b1.style.background = album.colors.b5;
     b3.style.background = album.colors.b3;
     b4.style.background = album.colors.b2;
     b5.style.background = album.colors.b2;
     b2.style.background = album.colors.b2;
     b6.style.background = album.colors.b4;
-    body.style.backgroundColor = album.colors.b1;
+    musicplayer.style.backgroundColor = album.colors.b1;
 
 
     if (song.ex){
@@ -41,18 +51,27 @@ function lss(){
         ex.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path fill="#FFFFFF" fill-rule="evenodd" d="M0 5a5 5 0 0 1 5-5h14a5 5 0 0 1 5 5v14a5 5 0 0 1-5 5H5a5 5 0 0 1-5-5V5Zm8.2 1.8h7.3v1.8h-5.2v2.5h4.8v1.7h-4.8v2.6h5.3v1.8H8.2V6.8Z"/>
         </svg>`;
+        hex.innerHTML = ex.innerHTML;
 
     } else {
 
         ex.innerHTML = "";
+        hex.innerHTML = "";
 
     }
 
 
     pro.value = 0;
     pro.style.setProperty("--progress", "0%");
+    hpro.value = 0;
+    hpro.style.setProperty("--progress", "0%");
+    minuteplayed.textContent = hminuteplayed.textContent = "0:00";
+    minuteleft.textContent = hminuteleft.textContent = "-0:00";
 
     updateMediaSession(song);
+
+    // checkScroll didefinisikan di file lain (dimuat setelah file ini)
+    if (typeof checkScroll === "function") checkScroll();
 }
 
 
@@ -75,91 +94,122 @@ favbtnn.addEventListener("click", () => {
 
 // PLAY / PAUSE
 
-function iconwhenplay(){
-    ply.innerHTML = `
-    <svg viewBox="0 0 32 28" xmlns="http://www.w3.org/2000/svg">
-        <path d="M13.293 22.772c.955 0 1.436-.481 1.436-1.436V6.677c0-.98-.481-1.427-1.436-1.427h-2.457c-.954 0-1.436.473-1.436 1.427v14.66c-.008.954.473 1.435 1.436 1.435h2.457zm7.87 0c.954 0 1.427-.481 1.427-1.436V6.677c0-.98-.473-1.427-1.428-1.427h-2.465c-.955 0-1.428.473-1.428 1.427v14.66c0 .954.473 1.435 1.428 1.435h2.465z" fill="#000" fill-rule="nonzero"></path>
-    </svg>
+// PLAY / PAUSE
+
+function iconwhenplay() {
+    const pauseIcon = `
+        <svg viewBox="0 0 32 28" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.293 22.772c.955 0 1.436-.481 1.436-1.436V6.677c0-.98-.481-1.427-1.436-1.427h-2.457c-.954 0-1.436.473-1.436 1.427v14.66c-.008.954.473 1.435 1.436 1.435h2.457zm7.87 0c.954 0 1.427-.481 1.427-1.436V6.677c0-.98-.473-1.427-1.428-1.427h-2.465c-.955 0-1.428.473-1.428 1.427v14.66c0 .954.473 1.435 1.428 1.435h2.465z" fill-rule="nonzero"></path>
+        </svg>
     `;
+
+    ply.innerHTML = pauseIcon;
+    homeply.innerHTML = pauseIcon;
 }
-function iconwhenpause(){
-    ply.innerHTML = `
-    <svg viewBox="0 0 32 28" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10.345 23.287c.415 0 .763-.15 1.22-.407l12.742-7.404c.838-.481 1.178-.855 1.178-1.46 0-.599-.34-.972-1.178-1.462L11.565 5.158c-.457-.265-.805-.407-1.22-.407-.789 0-1.345.606-1.345 1.57V21.71c0 .971.556 1.577 1.345 1.577z" fill-rule="nonzero"></path>
-    </svg>
+
+function iconwhenpause() {
+    const playIcon = `
+        <svg viewBox="0 0 32 28" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.345 23.287c.415 0 .763-.15 1.22-.407l12.742-7.404c.838-.481 1.178-.855 1.178-1.46 0-.599-.34-.972-1.178-1.462L11.565 5.158c-.457-.265-.805-.407-1.22-.407-.789 0-1.345.606-1.345 1.57V21.71c0 .971.556 1.577 1.345 1.577z" fill-rule="nonzero"></path>
+        </svg>
     `;
+
+    ply.innerHTML = playIcon;
+    homeply.innerHTML = playIcon;
 }
 
 au.addEventListener("play", () => {
     iconwhenplay();
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+
+    if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
+    }
 });
 
 au.addEventListener("pause", () => {
     iconwhenpause();
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+
+    if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+    }
 });
 
-ply.addEventListener("click", async () => {
-
+async function togglePlayback() {
     if (au.paused) {
-
         try {
             await au.play();
         } catch (error) {
             console.error("PLAY ERROR:", error);
         }
-
     } else {
-
         au.pause();
-
     }
+}
 
+[ply, homeply].forEach(btn => {
+    btn.addEventListener("click", togglePlayback);
 });
 
+// PREVIOUS SONG
 
-// NEXT SONG WHEN ENDED
-
-au.addEventListener("ended", () => {
-
-    cs++;
-
-    if (cs >= songs.length) {
-        cs = 0;
-    }
-
-    lss();
-    au.play();
-
-});
-
-// PREVV SONG 
-prevbtn.addEventListener("click", () => {
+function previousSong() {
     cs--;
 
-    if (cs < 0){
+    if (cs < 0) {
         cs = songs.length - 1;
     }
 
     lss();
-    au.play()
-    
-})
+    au.play();
+}
 
+// NEXT SONG
 
-// NEXTT SONG 
-nextbtn.addEventListener("click", () => {
-    cs++;
+let shuffleOn = false;
 
-    if (cs >= songs.length){
-        cs = 0;
+function toggleShuffle() {
+    shuffleOn = !shuffleOn;
+
+    shufflebtn.classList.toggle("active", shuffleOn);
+    homeshuffle.classList.toggle("active", shuffleOn);
+}
+
+[shufflebtn, homeshuffle].forEach(btn => {
+    btn.addEventListener("click", toggleShuffle);
+});
+
+function nextSong() {
+    if (shuffleOn && songs.length > 1) {
+        let n;
+        do {
+            n = Math.floor(Math.random() * songs.length);
+        } while (n === cs);
+        cs = n;
+    } else {
+        cs++;
+
+        if (cs >= songs.length) {
+            cs = 0;
+        }
     }
 
     lss();
-    iconwhenplay();
-    au.play()
-})
+    au.play();
+}
+
+// BUTTON LISTENERS
+
+[prevbtn, homeprev].forEach(btn => {
+    btn.addEventListener("click", previousSong);
+});
+
+[nextbtn, homenext].forEach(btn => {
+    btn.addEventListener("click", nextSong);
+});
+
+// AUTO NEXT WHEN ENDED
+
+au.addEventListener("ended", nextSong);
 
 
 // AUDIO METADATA
@@ -170,6 +220,7 @@ au.addEventListener("loadedmetadata", () => {
 
     minuteleft.textContent =
         "-" + formatTime(au.duration - au.currentTime);
+    hminuteleft.textContent = minuteleft.textContent;
 
     const song = currentSong;
 
@@ -190,72 +241,7 @@ au.addEventListener("loadedmetadata", () => {
 
 
 
-// AUDIO TIME UPDATE
-
-au.addEventListener("timeupdate", () => {
-
-    if (!isFinite(au.duration) || isNaN(au.duration)) return;
-
-
-    // PROGRESS BAR
-
-    const persen =
-        (au.currentTime / au.duration) * 100;
-
-    pro.value = persen;
-
-    pro.style.setProperty(
-        "--progress",
-        `${persen}%`
-    );
-
-
-    // TIME
-
-    minuteplayed.textContent =
-        formatTime(au.currentTime);
-
-    minuteleft.textContent =
-        "-" + formatTime(au.duration - au.currentTime);
-
-
-
-    // LYRICS SYNC
-
-    if (!currentSong.lyrics) return;
-
-
-    let index = -1;
-
-
-    currentSong.lyrics.forEach((line, i) => {
-
-        if (
-            au.currentTime >=
-            line.time + (currentSong.lyricOffset || 0)
-        ) {
-            index = i;
-        }
-
-    });
-
-
-    if (index === lastIndex) return;
-
-
-    lastIndex = index;
-
-
-    const lyricLines = document.querySelectorAll("#lyrics p");
-
-    lyricLines.forEach((p, i) => {
-
-    p.classList.toggle(
-        "active",
-        i === index
-    );
-
-});
+// SMOOTH LYRIC SCROLL (di luar timeupdate supaya animasi lama bisa dibatalkan)
 
 let lyricScrollAnimation;
 
@@ -315,6 +301,79 @@ function smoothLyricScroll(target, duration = 500) {
     lyricScrollAnimation = requestAnimationFrame(animate);
 }
 
+
+// AUDIO TIME UPDATE
+
+au.addEventListener("timeupdate", () => {
+
+    if (!isFinite(au.duration) || isNaN(au.duration)) return;
+
+
+    // PROGRESS BAR
+
+    const persen =
+        (au.currentTime / au.duration) * 100;
+
+    pro.value = persen;
+
+    pro.style.setProperty(
+        "--progress",
+        `${persen}%`
+    );
+
+
+    // TIME
+
+    minuteplayed.textContent =
+        formatTime(au.currentTime);
+
+    minuteleft.textContent =
+        "-" + formatTime(au.duration - au.currentTime);
+
+    hpro.value = persen;
+    hpro.style.setProperty("--progress", `${persen}%`);
+    hminuteplayed.textContent = minuteplayed.textContent;
+    hminuteleft.textContent = minuteleft.textContent;
+
+
+
+    // LYRICS SYNC
+
+    if (!currentSong.lyrics) return;
+
+
+    let index = -1;
+
+
+    currentSong.lyrics.forEach((line, i) => {
+
+        if (
+            au.currentTime >=
+            line.time + (currentSong.lyricOffset || 0)
+        ) {
+            index = i;
+        }
+
+    });
+
+
+    if (index === lastIndex) return;
+
+
+    lastIndex = index;
+
+
+    const lyricLines = document.querySelectorAll("#lyrics p");
+
+    lyricLines.forEach((p, i) => {
+
+    p.classList.toggle(
+        "active",
+        i === index
+    );
+
+});
+
 if (lyricLines[index]) {
 
     const activeLyric = lyricLines[index];
@@ -334,21 +393,24 @@ if (lyricLines[index]) {
 
 // PROGRESS BAR
 
-pro.addEventListener("input", () => {
+[pro, hpro].forEach(bar => {
+    bar.addEventListener("input", () => {
 
-    if (!isFinite(au.duration) || isNaN(au.duration)) return;
+        if (!isFinite(au.duration) || isNaN(au.duration)) return;
 
+        au.currentTime =
+            (bar.value / 100) * au.duration;
 
-    au.currentTime =
-        (pro.value / 100) * au.duration;
+        minuteplayed.textContent =
+            formatTime(au.currentTime);
 
+        minuteleft.textContent =
+            "-" + formatTime(au.duration - au.currentTime);
 
-    minuteplayed.textContent =
-        formatTime(au.currentTime);
+        hminuteplayed.textContent = minuteplayed.textContent;
+        hminuteleft.textContent = minuteleft.textContent;
 
-    minuteleft.textContent =
-        "-" + formatTime(au.duration - au.currentTime);
-
+    });
 });
 
 
@@ -440,34 +502,46 @@ function loadlirikk(lyricsData){
 
 }
 
-// SHORTCUTTT
+// SHORTCUT
 
 document.addEventListener("keydown", (e) => {
 
-    // PLAY
     if (e.code === "Space") {
+        // tombol yang sedang fokus sudah memicu click sendiri saat Space ditekan
+        if (e.target.tagName === "BUTTON") return;
         e.preventDefault();
-        ply.click();
+        togglePlayback();
     }
 
-    // NEXT
     if (e.ctrlKey && e.code === "ArrowRight") {
         e.preventDefault();
-        nextbtn.click();
+        nextSong();
     }
 
-    // PREV
     if (e.ctrlKey && e.code === "ArrowLeft") {
         e.preventDefault();
-        prevbtn.click();
+        previousSong();
     }
 
-    // SHOWLYRICS
     if (e.ctrlKey && e.code === "KeyP") {
         e.preventDefault();
         lyricsbtnt.click();
     }
 
+});
+
+
+// LOOP BUTTON
+
+function toggleLoop() {
+    au.loop = !au.loop;
+
+    loopbtn.classList.toggle("active", au.loop);
+    homeloop.classList.toggle("active", au.loop);
+}
+
+[loopbtn, homeloop].forEach(btn => {
+    btn.addEventListener("click", toggleLoop);
 });
 
 // flexcontent
@@ -486,7 +560,6 @@ lyricsbtnt.addEventListener("click", () => {
         rsect.classList.add("view");
         lsectt.classList.remove("hide");
         lyricsbtnt.querySelector("svg").classList.remove("hide");
-        lyricsbtnt.querySelector("svg").maskImage(album.colors.b1);
     } else {
         rsect.classList.add("hide");
         rsect.classList.remove("view");

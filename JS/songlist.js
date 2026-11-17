@@ -470,6 +470,20 @@ const songs = [
     ex: true,
   },
 
+  // oh yeah? - steve lacy
+  {
+    key: "oh yeah?",
+    title: "oh yeah?",
+    artist: "Steve Lacy",
+    music: "Music/Steve Lacy/oh yeah/oh yeah.mp3",
+
+    album: "oh yeah?",
+    albumkey: "oh-yeah",
+
+    lyricOffset: -0.65,
+    ex: true,
+  },
+
 ];
 
 

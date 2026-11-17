@@ -117,4 +117,20 @@ const albums = [
             b5: "#0e2c10"
         }
     },
+
+    // Steve Lacy
+
+    {
+        key: "oh-yeah",
+        name: "oh yeah?",
+        cover: "Album/Steve Lacy/oh yeah.jpeg",
+
+        colors: {
+            b1: "#280e4f",
+            b2: "#13102d",
+            b3: "#69404a",
+            b4: "#280e4f",
+            b5: "#69404a"
+        }
+    },  
 ];

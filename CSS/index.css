@@ -1,0 +1,316 @@
+:root {
+  --colorblack: #1f1f1f;
+  --colorwhite: #ffffff;
+  --colorwhite1: #b9b9b9;
+  --hoverbgwhite: #ffffff15;
+  --golden: #e1c169;
+
+  --fontmain: "inter", sans-serif;
+  --secondfont: "dm sans", sans-serif;
+  --mainfonttitle: "Bricolage Grotesque", sans-serif;
+
+  --transition: cubic-bezier(0.61, 0.01, 0.4, 1);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--fontmain);
+}
+
+a {
+  color: var(--colorwhite);
+  font-family: var(--fontmain);
+  text-decoration: none;
+}
+
+.hide {
+  display: none;
+}
+
+.home svg {
+  display: block;
+}
+
+body {
+  display: flex;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  background-color: var(--colorblack);
+}
+
+.home {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* SIDEBAR */
+
+.home .sidebar {
+  position: fixed;
+  z-index: 999;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  width: 240px;
+  height: 100%;
+  padding: 10px;
+
+  background-color: #ffffff05;
+  border: 1px solid #e0e0e013;
+  border-left: 0;
+
+  transition: all .3s var(--transition);
+}
+
+/* SIDEBAR HEADER */
+
+.home .bars {
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 10px);
+  padding: 10px 0;
+  margin-left: 10px;
+}
+
+.home .logosect {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  width: 100%;
+  gap: 4px;
+}
+
+/* LOGO */
+
+.home .logoo {
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.home .logoo svg {
+  width: 36px;
+  height: 36px;
+  fill: var(--colorwhite);
+}
+
+.home .logoo div {
+  color: var(--colorwhite);
+  font-family: var(--mainfonttitle);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+
+/* TOGGLE ICON */
+
+.home svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--colorwhite1);
+  stroke-width: 1.7;
+}
+
+.home .bars-link a svg {
+  stroke: var(--golden);
+}
+
+/* NAVIGATION */
+
+.home .bars-link {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.home .bars-link a {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  padding: 8px;
+  gap: 8px;
+
+  color: var(--colorwhite);
+  font-size: 13px;
+
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.home .bars-link a:hover {
+  background: var(--hoverbgwhite);
+}
+
+.home .bars-link a.active {
+  outline: 1px solid var(--colorwhite);
+  border-radius: 12px;
+}
+
+/* Bottom BAR */
+.home .bottombar {
+  margin-bottom: 8px;
+  padding: 0 10px;
+  gap: 8px;
+}
+
+.home .bottombar .bb-content {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  width: 100%;
+  font-size: 13px;
+  color: var(--colorwhite1);
+  gap: 4px;
+}
+.home .bottombar .bb-content svg {
+  width: 14px;
+}
+
+.home .signinbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--colorwhite);
+  height: 35px;
+  width: 100%;
+  border-radius: 10rem;
+  gap: 6px;
+  cursor: not-allowed;
+}
+.home .signinbtn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: currentColor;
+}
+.home .signinbtn span {
+  font-size: 13px;
+}
+
+
+/* MUSICPLAYER */
+.home .musicplayerr {
+  display: flex;
+  left: 300px;
+  position: fixed;
+  padding: 8px;
+  bottom: 10px;
+}
+
+.home .musicplayerr svg {
+  stroke: none;
+}
+
+.home .metadatamp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.home .metadatamp img {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  outline: 1.5px solid #ffffff53;
+  outline-offset: -1.5px;
+}
+
+.home .mdmp-songta {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 60px);
+  mask-image: linear-gradient(to left, transparent 0%, black 60px);
+  width: 120px; 
+}
+
+.home .mdmp-songtitle {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--colorwhite);
+  gap: 4px;
+}
+.home .mdmp-songtitle svg {
+  width: 12px;
+  height: 12px;
+}
+.home #artist {
+  font-size: 12px;
+  font-weight: 500;
+  color: #ffffff8a;
+}
+
+
+/* MP */
+
+.home .musicplayerr {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.home .musicplayerr .controlerr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home .musicplayerr .controlerr button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home .musicplayerr .controlerr button svg {
+  width: 22px;
+  height: 22px;
+  fill: var(--colorwhite);
+  opacity: 0.8;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.home .musicplayerr .controlerr button svg:hover {
+  opacity: 1;
+}
+
+/* Ukuran khusus tombol play di preview agar pas */
+.home .musicplayerr .controlerr #playy svg {
+  width: 28px;
+  height: 28px;
+}
+
+.home .musicplayerr .controlerr #shuffle svg,
+.home .musicplayerr .controlerr #loopbtn svg {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.home .musicplayerr .controlerr #loopbtn {
+  position: relative;
+}
+
+.home .musicplayerr .controlerr #loopbtn text {
+  font-family: "Inter", sans-serif;
+  font-size: 9px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  fill: var(--colorwhite);
+}
