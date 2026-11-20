@@ -51,16 +51,26 @@
         </div>
         <div class="musicplayerr">
             <div class="metadatamp">
-                <div>
-                    <img src="" id="cover">
-                </div>
-
-                <div class="mdmp-songta">
-                    <div class="mdmp-songtitle">
-                        <span id="title"></span>
-                        <span id="ex"></span>
+                <div class="mdamp-top">
+                    <div>
+                        <img src="" id="cover">
                     </div>
-                    <span id="artist"></span>
+
+                    <div class="mdmp-songta">
+                        <div class="mdmp-songtitle">
+                            <span id="title"></span>
+                            <span id="ex"></span>
+                        </div>
+                        <span id="artist"></span>
+                    </div>
+
+                    <div>
+                        <button class="faviconsvg" id="favbtnn">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3.5l2.47 5.6 6.03.55-4.57 4.02 1.37 5.93L12 16.6l-5.3 2.99 1.37-5.93-4.57-4.02 6.03-.55L12 3.5Z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="controler">
@@ -82,11 +92,9 @@
                     </button>
                 </div>
                 <div class="cmp-progressbar">
+                    <span id="minuteplayed">0:00</span>
                     <input type="range" id="progressbar" class="probar" value="0" min="0" max="100" step="0.1">
-                    <div class="progresstime">
-                        <span id="minuteplayed">0:00</span>
-                        <span id="minuteleft">-0:00</span>
-                    </div>
+                    <span id="minuteleft">-0:00</span>
                 </div>
             </div>
             <div class="morebutton"></div>

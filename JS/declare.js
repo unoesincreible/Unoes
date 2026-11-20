@@ -1,5 +1,12 @@
 // MAIN INDEX
-
+const hfavbtn = document.getElementById("favbtnn");
+const htitle = document.querySelector("#home #title");
+const hartist = document.querySelector("#home #artist");
+const hcover = document.querySelector("#home #cover");
+const hex = document.querySelector("#home #ex");
+const hpro = document.querySelector("#home #progressbar");
+const hminuteplayed = document.querySelector("#home #minuteplayed");
+const hminuteleft = document.querySelector("#home #minuteleft");
 
 
 
@@ -11,15 +18,6 @@ const artist = document.querySelector("#musicplayer #artist");
 const cover = document.querySelector("#musicplayer #cover");
 const au = document.getElementById("music");
 const pro = document.querySelector("#musicplayer #progressbar");
-
-// mini player di home
-const htitle = document.querySelector("#home #title");
-const hartist = document.querySelector("#home #artist");
-const hcover = document.querySelector("#home #cover");
-const hex = document.querySelector("#home #ex");
-const hpro = document.querySelector("#home #progressbar");
-const hminuteplayed = document.querySelector("#home #minuteplayed");
-const hminuteleft = document.querySelector("#home #minuteleft");
 const lyrics = document.getElementById("lyrics");
 const b1 = document.getElementById("blob1");
 const b2 = document.getElementById("blob2");
