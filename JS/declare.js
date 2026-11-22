@@ -1,5 +1,5 @@
 // MAIN INDEX
-const hfavbtn = document.getElementById("favbtnn");
+const hfavbtnn = document.querySelector("#home #favbtnn");
 const htitle = document.querySelector("#home #title");
 const hartist = document.querySelector("#home #artist");
 const hcover = document.querySelector("#home #cover");
@@ -7,6 +7,7 @@ const hex = document.querySelector("#home #ex");
 const hpro = document.querySelector("#home #progressbar");
 const hminuteplayed = document.querySelector("#home #minuteplayed");
 const hminuteleft = document.querySelector("#home #minuteleft");
+const openfullscreen = document.getElementById("openfullscreenonalbum");
 
 
 
@@ -33,7 +34,7 @@ const musicplayer = document.getElementById("musicplayer");
 const ex = document.querySelector("#musicplayer #ex");
 const minuteplayed = document.querySelector("#musicplayer #minuteplayed");
 const minuteleft = document.querySelector("#musicplayer #minuteleft");
-const favbtnn = document.getElementById("favbtnn");
+const favbtnn = document.querySelector("#musicplayer #favbtnn");
 const volume = document.getElementById("volume");
 const volume2 = document.getElementById("volume2");
 const vicon = document.getElementById("vicon");
@@ -41,6 +42,7 @@ const vicon2 = document.getElementById("vicon2");
 const lyricsbtnt = document.getElementById("lyricsbtntoggle");
 const rsect = document.getElementById("rsect");
 const lsectt = document.getElementById("lsectt");
+const closemp = document.getElementById("closemp");
 
 
 // controler

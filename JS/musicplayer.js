@@ -2,6 +2,7 @@ let cs = Number(localStorage.getItem("cs")) || 0;
 if (cs < 0 || cs >= songs.length) cs = 0;
 let currentSong = songs[cs];
 let lastIndex = -1;
+let lyricItems = [];
 
 
 function formatTime(sec) {
@@ -9,6 +10,64 @@ function formatTime(sec) {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+
+// MARQUEE
+
+function marquee(el, text) {
+    el.getAnimations({ subtree: true }).forEach(anim => anim.cancel());
+    el.classList.remove("running");
+    el.replaceChildren();
+
+    const a = document.createElement("span");
+    a.textContent = text;
+    el.append(a);
+
+    if (a.offsetWidth <= el.clientWidth) return;
+
+    a.style.paddingRight = "40px";
+    const w = a.offsetWidth;
+    const b = a.cloneNode(true);
+    el.append(b);
+
+    el.classList.add("running");
+
+    const total = (w / 30) * 1000 + 5000;
+    const p = 5000 / total;
+    const f = Math.min(400 / total, (1 - p) / 3);
+
+    el.animate(
+        [
+            { "--fade-l": "0px", offset: 0 },
+            { "--fade-l": "0px", offset: p },
+            { "--fade-l": "24px", offset: p + f },
+            { "--fade-l": "24px", offset: 1 - f },
+            { "--fade-l": "0px", offset: 1 },
+        ],
+        { duration: total, iterations: Infinity }
+    );
+
+    for (const n of [a, b]) {
+        n.animate(
+            [
+                { transform: "none", offset: 0 },
+                { transform: "none", offset: 5000 / total },
+                { transform: `translateX(-${w}px)` },
+            ],
+            { duration: total, iterations: Infinity }
+        );
+    }
+}
+
+function renderMarquee() {
+    const sub = currentSong.artist + " — " + currentSong.album;
+
+    marquee(htitle, currentSong.title);
+    marquee(hartist, sub);
+
+    marquee(title, currentSong.title);
+    marquee(artist, sub);
 }
 
 
@@ -23,19 +82,16 @@ function lss(){
 
     const album = albums.find(a => a.key === song.albumkey);
 
-    title.textContent = song.title;
-    artist.textContent = song.artist + " — " + song.album; 
     cover.src = album.cover;
     au.src = song.music;
 
     // sinkron ke mini player di home
-    htitle.textContent = song.title;
-    hartist.textContent = song.artist + " — " + song.album;
     hcover.src = album.cover;
 
     // bersihkan lirik lagu sebelumnya
     lyrics.innerHTML = "";
     lastIndex = -1;
+    lyricItems = [];
 
     b1.style.background = album.colors.b5;
     b3.style.background = album.colors.b3;
@@ -60,11 +116,14 @@ function lss(){
 
     }
 
+    // diukur setelah badge ex terpasang, karena badge ikut mengurangi lebar judul
+    renderMarquee();
+
 
     pro.value = 0;
     pro.style.setProperty("--progress", "0%");
     hpro.value = 0;
-    hpro.style.setProperty("--progress", "0%");
+    hpro.style.setProperty("--hprogress", "0%");
     minuteplayed.textContent = hminuteplayed.textContent = "0:00";
     minuteleft.textContent = hminuteleft.textContent = "-0:00";
 
@@ -77,6 +136,9 @@ function lss(){
 
 lss();
 
+// ukur ulang setelah font Inter selesai dimuat
+document.fonts.ready.then(renderMarquee);
+
 au.addEventListener("timeupdate", () => {
     localStorage.setItem("time", au.currentTime);
 });
@@ -85,10 +147,15 @@ au.addEventListener("timeupdate", () => {
 
 // FAVORITE
 
-favbtnn.addEventListener("click", () => {
+[favbtnn, hfavbtnn].forEach(btn => {
+    btn.addEventListener("click", () => {
 
-    favbtnn.classList.toggle("active");
+        const on = !favbtnn.classList.contains("active");
 
+        favbtnn.classList.toggle("active", on);
+        hfavbtnn.classList.toggle("active", on);
+
+    });
 });
 
 
@@ -241,65 +308,154 @@ au.addEventListener("loadedmetadata", () => {
 
 
 
-// SMOOTH LYRIC SCROLL (di luar timeupdate supaya animasi lama bisa dibatalkan)
+// LYRICS ENGINE (tiap baris gerak dengan delay sendiri, ala Apple Music)
 
-let lyricScrollAnimation;
+const LYRIC_STAGGER = 35;
+const LYRIC_ACCEL = 5;
+const LYRIC_DELAY_MAX = 800;
+const LYRIC_DURATION = 650;
+const LYRIC_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+const LYRIC_RESUME_MS = 3000;
+const LYRIC_GAP_MIN = 8;
+const LYRIC_DOTS_DELAY = 4;
 
-function smoothLyricScroll(target, duration = 500) {
-    cancelAnimationFrame(lyricScrollAnimation);
+let lyricUserScroll = false;
+let lyricResumeTimer;
 
-    const start = lyrics.scrollTop;
-    const distance = target - start;
-    const startTime = performance.now();
+function lyricTarget(el) {
+    const max = lyrics.scrollHeight - lyrics.clientHeight;
+    const center = el.offsetTop - lyrics.clientHeight / 2 + el.offsetHeight / 2;
 
-    function cubicBezier(t, p1, p2) {
-        return (
-            3 * (1 - t) ** 2 * t * p1 +
-            3 * (1 - t) * t ** 2 * p2 +
-            t ** 3
-        );
-    }
-
-    function getBezierProgress(x) {
-        let t = x;
-
-        for (let i = 0; i < 8; i++) {
-            const error = cubicBezier(t, 0.6, 0.4) - x;
-
-            const derivative =
-                3 * (1 - t) ** 2 * 0.6 +
-                6 * (1 - t) * t * (0.4 - 0.6) +
-                3 * t ** 2 * (1 - 0.4);
-
-            if (Math.abs(error) < 0.0001) break;
-            if (Math.abs(derivative) < 0.0001) break;
-
-            t = Math.max(0, Math.min(1, t - error / derivative));
-        }
-
-        return cubicBezier(t, 0, 1);
-    }
-
-    function animate(now) {
-        const progress = Math.min(
-            (now - startTime) / duration,
-            1
-        );
-
-        const eased = getBezierProgress(progress);
-
-        lyrics.scrollTop = start + distance * eased;
-
-        if (progress < 1) {
-            lyricScrollAnimation =
-                requestAnimationFrame(animate);
-        } else {
-            lyricScrollAnimation = null;
-        }
-    }
-
-    lyricScrollAnimation = requestAnimationFrame(animate);
+    return Math.max(0, Math.min(max, center));
 }
+
+function cancelLyricAnimations() {
+    lyrics.getAnimations({ subtree: true })
+        .filter(a => a.id === "lyric-move")
+        .forEach(a => a.cancel());
+}
+
+function currentShift(el) {
+    const translate = getComputedStyle(el).translate;
+
+    return translate === "none" ? 0 : parseFloat(translate.split(" ")[1]) || 0;
+}
+
+function snapshotLyrics() {
+    const top = lyrics.scrollTop;
+
+    return lyricItems.map(it => it.el.offsetTop - top + currentShift(it.el));
+}
+
+// FLIP umum: ukur posisi sebelum, ubah layout/scroll, ukur sesudah,
+// lalu tiap baris dianimasikan dari posisi lama ke posisi baru dengan delay sendiri
+function moveLyrics(index, animate = true, change = null) {
+
+    const item = lyricItems[index];
+    const canMove = lyrics.clientHeight > 0 && !rsect.classList.contains("hide");
+
+    const oldScroll = lyrics.scrollTop;
+    const before = canMove && animate ? snapshotLyrics() : null;
+
+    if (change) change();
+
+    if (!canMove) return;
+
+    if (!lyricUserScroll && item) lyrics.scrollTop = lyricTarget(item.el);
+
+    if (!before || Math.abs(lyrics.scrollTop - oldScroll) > lyrics.clientHeight * 3) {
+        cancelLyricAnimations();
+        return;
+    }
+
+    const view = lyrics.clientHeight;
+    const margin = 80;
+    const scroll = lyrics.scrollTop;
+
+    lyricItems.forEach((it, i) => {
+
+        const after = it.el.offsetTop - scroll;
+        const delta = before[i] - after;
+
+        if (Math.abs(delta) < 0.5) return;
+
+        const h = it.el.offsetHeight;
+
+        if (Math.max(before[i], after) + h < -margin) return;
+        if (Math.min(before[i], after) > view + margin) return;
+
+        it.el.getAnimations()
+            .filter(a => a.id === "lyric-move")
+            .forEach(a => a.cancel());
+
+        const dist = Math.max(i - index, 0);
+        const delay = Math.min(LYRIC_STAGGER * dist + LYRIC_ACCEL * dist * dist, LYRIC_DELAY_MAX);
+
+        const anim = it.el.animate(
+            [
+                { translate: `0 ${delta}px` },
+                { translate: "0 0" }
+            ],
+            {
+                duration: LYRIC_DURATION,
+                delay: delay,
+                easing: LYRIC_EASING,
+                fill: "backwards"
+            }
+        );
+
+        anim.id = "lyric-move";
+
+    });
+
+}
+
+function followLyric(index, animate = true) {
+    moveLyrics(index, animate);
+}
+
+function setActiveLyric(index) {
+
+    moveLyrics(index, true, () => {
+
+        lyricItems.forEach((item, i) => {
+            item.el.classList.toggle("active", i === index);
+        });
+
+    });
+
+}
+
+function resumeLyricFollow() {
+    clearTimeout(lyricResumeTimer);
+    lyricUserScroll = false;
+}
+
+function onLyricUserScroll() {
+
+    if (!lyricUserScroll) cancelLyricAnimations();
+
+    lyricUserScroll = true;
+
+    clearTimeout(lyricResumeTimer);
+
+    lyricResumeTimer = setTimeout(() => {
+        lyricUserScroll = false;
+        followLyric(lastIndex);
+    }, LYRIC_RESUME_MS);
+
+}
+
+lyrics.addEventListener("wheel", onLyricUserScroll, { passive: true });
+lyrics.addEventListener("touchmove", onLyricUserScroll, { passive: true });
+
+rsect.addEventListener("transitionend", (e) => {
+
+    if (e.target !== rsect || e.propertyName !== "width") return;
+
+    if (rsect.classList.contains("view")) followLyric(lastIndex, false);
+
+});
 
 
 // AUDIO TIME UPDATE
@@ -320,6 +476,11 @@ au.addEventListener("timeupdate", () => {
         "--progress",
         `${persen}%`
     );
+    hpro.value = persen;
+    hpro.style.setProperty(
+        "--hprogress",
+        `${persen}%`
+    );
 
 
     // TIME
@@ -330,8 +491,7 @@ au.addEventListener("timeupdate", () => {
     minuteleft.textContent =
         "-" + formatTime(au.duration - au.currentTime);
 
-    hpro.value = persen;
-    hpro.style.setProperty("--progress", `${persen}%`);
+    
     hminuteplayed.textContent = minuteplayed.textContent;
     hminuteleft.textContent = minuteleft.textContent;
 
@@ -339,53 +499,25 @@ au.addEventListener("timeupdate", () => {
 
     // LYRICS SYNC
 
-    if (!currentSong.lyrics) return;
+    if (!lyricItems.length) return;
 
+    const offset = currentSong.lyricOffset || 0;
 
     let index = -1;
 
+    lyricItems.forEach((item, i) => {
 
-    currentSong.lyrics.forEach((line, i) => {
-
-        if (
-            au.currentTime >=
-            line.time + (currentSong.lyricOffset || 0)
-        ) {
+        if (au.currentTime >= item.time + offset) {
             index = i;
         }
 
     });
 
-
     if (index === lastIndex) return;
-
 
     lastIndex = index;
 
-
-    const lyricLines = document.querySelectorAll("#lyrics p");
-
-    lyricLines.forEach((p, i) => {
-
-    p.classList.toggle(
-        "active",
-        i === index
-    );
-
-});
-
-if (lyricLines[index]) {
-
-    const activeLyric = lyricLines[index];
-
-    const scrollPosition =
-        activeLyric.offsetTop -
-        (lyrics.clientHeight / 2) +
-        (activeLyric.offsetHeight / 2);
-
-    smoothLyricScroll(scrollPosition, 500);
-
-}
+    setActiveLyric(index);
 
 });
 
@@ -481,8 +613,23 @@ speakkker();
 function loadlirikk(lyricsData){
 
     lyrics.innerHTML = "";
+    lyricItems = [];
 
     if (!lyricsData || !lyricsData.length) return;
+
+    const addDots = (time) => {
+
+        const dots = document.createElement("div");
+
+        dots.className = "lyric-dots";
+        dots.innerHTML = "<span></span><span></span><span></span>";
+
+        lyrics.appendChild(dots);
+        lyricItems.push({ time: time, el: dots });
+
+    };
+
+    if (lyricsData[0].time >= LYRIC_GAP_MIN) addDots(0);
 
     lyricsData.forEach((line, index) => {
 
@@ -493,10 +640,18 @@ function loadlirikk(lyricsData){
         p.dataset.index = index;
 
         p.addEventListener("click", () => {
+            resumeLyricFollow();
             au.currentTime = line.time + (currentSong.lyricOffset || 0);
         });
 
         lyrics.appendChild(p);
+        lyricItems.push({ time: line.time, el: p });
+
+        const next = lyricsData[index + 1];
+
+        if (next && next.time - line.time >= LYRIC_GAP_MIN) {
+            addDots(line.time + LYRIC_DOTS_DELAY);
+        }
 
     });
 
@@ -598,3 +753,11 @@ function updateMediaSession(song) {
         lss(); au.play();
     });
 }
+
+closemp.addEventListener("click", () => {
+    if (musicplayer.classList.contains("open")) {
+        musicplayer.classList.remove("open");
+    } else {
+        musicplayer.classList.add("open");
+    }
+})
